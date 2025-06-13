@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.37.0/apexcharts.min.js"></script>
+
+</head>
+<body>
+    <div id="grafico"></div>
+
+    <script>
+        var options = {
+            chart: { type: 'line' },
+            series: [{ name: 'Voltaje A', data: [] }],
+            xaxis: { type: 'datetime' }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#grafico"), options);
+        chart.render();
+
+        function actualizarDatos() {
+            fetch("https://localhost:8080/obtener_datos")
+                .then(response => response.json())
+                .then(data => {
+                    chart.updateSeries([{ data: data.voltaje_A }]);
+                });
+        }
+
+        setInterval(actualizarDatos, 2000);
+    </script>
+</body>
+</html>

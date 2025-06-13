@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Analítica Energética</title>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .charts-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    }
+    .chart-box {
+      width: 45%;
+      margin-bottom: 20px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+    }
+    .select-container {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    footer {
+      text-align: center;
+      padding: 15px;
+      font-size: 14px;
+      background: #222;
+      color: #fff;
+      position: relative;
+      bottom: 0;
+      width: 100%;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Panel Analítica Energética</h1>
+  <div class="charts-container">
+    <div class="chart-box">
+      <div class="select-container">
+        <select id="select1"></select>
+      </div>
+      <div id="chart1"></div>
+    </div>
+    <div class="chart-box">
+      <div class="select-container">
+        <select id="select2"></select>
+      </div>
+      <div id="chart2"></div>
+    </div>
+    <div class="chart-box">
+      <div class="select-container">
+        <select id="select3"></select>
+      </div>
+      <div id="chart3"></div>
+    </div>
+    <div class="chart-box">
+      <div class="select-container">
+        <select id="select4"></select>
+      </div>
+      <div id="chart4"></div>
+    </div>
+    <div class="chart-box">
+      <div class="select-container">
+        <select id="select5"></select>
+      </div>
+      <div id="chart5"></div>
+    </div>
+    <div class="chart-box">
+      <div class="select-container">
+        <select id="select6"></select>
+      </div>
+      <div id="chart6"></div>
+    </div>
+  </div>
+
+  <footer>© 2025 ENERGÉTICA. Todos los derechos reservados. El Salvador.</footer>
+
+  <script>
+    const availableParams = [
+      { value: "voltaje_A", label: "Voltaje A" },
+      { value: "voltaje_B", label: "Voltaje B" },
+      { value: "voltaje_C", label: "Voltaje C" },
+      { value: "voltaje_AB", label: "Voltaje AB" },
+      { value: "voltaje_BC", label: "Voltaje BC" },
+      { value: "voltaje_CA", label: "Voltaje CA" },
+      { value: "corriente_A", label: "Corriente A" },
+      { value: "corriente_B", label: "Corriente B" },
+      { value: "corriente_C", label: "Corriente C" },
+      { value: "potencia_activa_A", label: "Potencia Activa A" },
+      { value: "potencia_activa_B", label: "Potencia Activa B" },
+      { value: "potencia_activa_C", label: "Potencia Activa C" },
+      { value: "potencia_activa_total", label: "Potencia Activa Total" },
+      { value: "potencia_reactiva_A", label: "Potencia Reactiva A" },
+      { value: "potencia_reactiva_B", label: "Potencia Reactiva B" },
+      { value: "potencia_reactiva_C", label: "Potencia Reactiva C" },
+      { value: "potencia_reactiva_total", label: "Potencia Reactiva Total" },
+      { value: "potencia_aparente_A", label: "Potencia Aparente A" },
+      { value: "potencia_aparente_B", label: "Potencia Aparente B" },
+      { value: "potencia_aparente_C", label: "Potencia Aparente C" },
+      { value: "potencia_aparente_total", label: "Potencia Aparente Total" },
+      { value: "factor_potencia_A", label: "Factor Potencia A" },
+      { value: "factor_potencia_B", label: "Factor Potencia B" },
+      { value: "factor_potencia_C", label: "Factor Potencia C" },
+      { value: "factor_potencia_promedio", label: "Factor Potencia Promedio" },
+      { value: "frecuencia", label: "Frecuencia" },
+      { value: "demanda_potencia_activa_total", label: "Demanda Activa Total" },
+      { value: "distorsion_armonica_voltaje_A", label: "Distorsión Armónica Voltaje A" },
+      { value: "distorsion_armonica_voltaje_B", label: "Distorsión Armónica Voltaje B" },
+      { value: "distorsion_armonica_voltaje_C", label: "Distorsión Armónica Voltaje C" },
+      { value: "distorsion_armonica_corriente_A", label: "Distorsión Armónica Corriente A" },
+      { value: "distorsion_armonica_corriente_B", label: "Distorsión Armónica Corriente B" },
+      { value: "distorsion_armonica_corriente_C", label: "Distorsión Armónica Corriente C" }
+    ];
+
+    function llenarSelects() {
+      for(let i = 1; i <= 6; i++){
+        const selectElem = document.getElementById("select" + i);
+        selectElem.innerHTML = "";
+        availableParams.forEach(param => {
+          let option = document.createElement("option");
+          option.value = param.value;
+          option.text = param.label;
+          selectElem.appendChild(option);
+        });
+        switch(i) {
+          case 1: selectElem.value = "voltaje_A"; break;
+          case 2: selectElem.value = "voltaje_B"; break;
+          case 3: selectElem.value = "voltaje_C"; break;
+          case 4: selectElem.value = "frecuencia"; break;
+          case 5: selectElem.value = "demanda_potencia_activa_total"; break;
+          case 6: selectElem.value = "corriente_A"; break;
+        }
+      }
+    }
+
+    llenarSelects();
+
+    function getChartOptions(title) {
+      return {
+        chart: { type: 'line', height: 250, animations: { enabled: false } },
+        series: [{ name: title, data: [] }],
+        xaxis: { type: 'datetime' },
+        yaxis: { labels: { formatter: val => val.toFixed(2) } }
+      };
+    }
+
+    const charts = [];
+    for(let i = 1; i <= 6; i++) {
+      const chart = new ApexCharts(document.getElementById("chart" + i), getChartOptions(document.getElementById("select" + i).value));
+      chart.render();
+      charts.push({ chart, select: document.getElementById("select" + i) });
+    }
+
+    async function actualizarDatos() {
+      try {
+        const response = await fetch("http://localhost:8000/datos");
+        const datos = await response.json();
+        console.log("Datos obtenidos:", datos);
+        if(datos.length > 0) {
+          charts.forEach(item => {
+            const param = item.select.value;
+            const seriesData = datos.map(registro => ({
+              x: new Date(registro.timestamp).getTime(),
+              y: registro[param] !== undefined ? registro[param] : 0
+            }));
+            item.chart.updateSeries([{ name: param, data: seriesData }]);
+          });
+        } else {
+          console.log("No hay datos para actualizar.");
+        }
+      } catch(error) {
+        console.error("Error al obtener datos:", error);
+      }
+    }
+
+    actualizarDatos();
+    setInterval(actualizarDatos, 2000);
+  </script>
+</body>
+</html>
