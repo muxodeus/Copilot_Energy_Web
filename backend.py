@@ -6,6 +6,8 @@ from datetime import datetime
 import psycopg2
 import os
 
+uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+
 # Definir la aplicación FastAPI
 app = FastAPI()
 
@@ -19,8 +21,14 @@ app.add_middleware(
 )
 
 # Configura la conexión a PostgreSQL
-DATABASE_URL = "postgresql://postgres:gnPxNCofvIzdZXMwvyFpVgRdUJfCBHNO@caboose.proxy.rlwy.net:59649/railway"
-conn = psycopg2.connect(DATABASE_URL)
+DATABASE_URL = "postgresql://mediciones_w63r_user:mJmDFzYPGpwflXHBxmpx8LhxXHAhW2uP@dpg-d17grr95pdvs738che40-a.oregon-postgres.render.com/mediciones_w63r"
+
+try:
+    conn = psycopg2.connect(DATABASE_URL)
+    print("Database connection successful!")
+except psycopg2.OperationalError as e:
+    print(f"Error connecting to PostgreSQL: {e}")
+    conn = None
 
 # Modelo de datos
 class Medicion(BaseModel):
@@ -72,3 +80,23 @@ async def obtener_datos():
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     return mediciones
+
+# Solo crear tabla si no existe
+cursor = conn.cursor()
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS mediciones (
+        id SERIAL PRIMARY KEY,
+        voltaje_a REAL,
+        voltaje_b REAL,
+        voltaje_c REAL,
+        frecuencia REAL,
+        demanda_potencia_activa_total REAL,
+        timestamp TIMESTAMP DEFAULT NOW()
+    );
+""")
+conn.commit()
+cursor.close()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
