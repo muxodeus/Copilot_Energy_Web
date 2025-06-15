@@ -5,8 +5,7 @@ from typing import List
 from datetime import datetime
 import psycopg2
 import os
-
-uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+import uvicorn  # Make sure it's imported at the top
 
 # Definir la aplicación FastAPI
 app = FastAPI()
@@ -20,8 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configura la conexión a PostgreSQL
-DATABASE_URL = "postgresql://mediciones_w63r_user:mJmDFzYPGpwflXHBxmpx8LhxXHAhW2uP@dpg-d17grr95pdvs738che40-a.oregon-postgres.render.com/mediciones_w63r"
+# Configurar la conexión a PostgreSQL
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://mediciones_w63r_user:mJmDFzYPGpwflXHBxmpx8LhxXHAhW2uP@dpg-d17grr95pdvs738che40-a.oregon-postgres.render.com/mediciones_w63r")
 
 try:
     conn = psycopg2.connect(DATABASE_URL)
@@ -42,6 +41,9 @@ class Medicion(BaseModel):
 # Endpoint para recibir datos (POST)
 @app.post("/recibir_datos")
 async def recibir_datos(medicion: Medicion):
+    if conn is None:
+        raise HTTPException(status_code=500, detail="Database connection is unavailable.")
+
     try:
         cursor = conn.cursor()
         if not medicion.timestamp:
@@ -62,6 +64,9 @@ async def recibir_datos(medicion: Medicion):
 # Endpoint para obtener datos (GET)
 @app.get("/datos", response_model=List[Medicion])
 async def obtener_datos():
+    if conn is None:
+        raise HTTPException(status_code=500, detail="Database connection is unavailable.")
+
     try:
         conn.rollback()
         cursor = conn.cursor()
@@ -81,22 +86,23 @@ async def obtener_datos():
         raise HTTPException(status_code=500, detail=str(e))
     return mediciones
 
-# Solo crear tabla si no existe
-cursor = conn.cursor()
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS mediciones (
-        id SERIAL PRIMARY KEY,
-        voltaje_a REAL,
-        voltaje_b REAL,
-        voltaje_c REAL,
-        frecuencia REAL,
-        demanda_potencia_activa_total REAL,
-        timestamp TIMESTAMP DEFAULT NOW()
-    );
-""")
-conn.commit()
-cursor.close()
+# Crear la tabla si no existe
+if conn is not None:
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mediciones (
+            id SERIAL PRIMARY KEY,
+            voltaje_a REAL,
+            voltaje_b REAL,
+            voltaje_c REAL,
+            frecuencia REAL,
+            demanda_potencia_activa_total REAL,
+            timestamp TIMESTAMP DEFAULT NOW()
+        );
+    """)
+    conn.commit()
+    cursor.close()
 
+# **Ensure Uvicorn Runs Correctly**
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
