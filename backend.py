@@ -6,6 +6,7 @@ from time import sleep
 import requests
 import os
 import uvicorn
+import json
 import asyncio
 from datetime import datetime
 from databases import Database
@@ -49,11 +50,14 @@ async def modbus_data_loop():
             "voltaje_C": 119.4,
             "frecuencia": 60.0,
             "demanda_potencia_activa_total": 470.1,
-            "timestamp": datetime.utcnow().isoformat()  # ✅ Convert `datetime` to an ISO 8601 string
+            "timestamp": datetime.utcnow().isoformat()  # ✅ Convert `datetime` to an ISO string
         }
+
+        print("Sending Data:", json.dumps(modbus_data, indent=4))  # ✅ Debugging payload before sending
+
         try:
             response = requests.post("https://copilot-energy-web.onrender.com/recibir_datos", json=modbus_data)
-            print("Sent Data:", response.status_code, response.json())  # ✅ Debugging
+            print("Response:", response.status_code, response.text)  # ✅ Debugging response data
         except Exception as e:
             print("Error sending data:", str(e))
 
@@ -107,21 +111,19 @@ from datetime import datetime
 @app.post("/recibir_datos")
 async def recibir_datos(datos: DatosMedicion):
     try:
+        if not datos.dict():  # ✅ Ensure JSON isn't empty
+            raise ValueError("Received empty JSON payload")
+
         query = """
         INSERT INTO mediciones_w63r (voltaje_a, voltaje_b, voltaje_c, frecuencia, demanda_potencia_activa_total, timestamp)
         VALUES (:voltaje_a, :voltaje_b, :voltaje_c, :frecuencia, :demanda_potencia_activa_total, :timestamp)
         """
-        await database.execute(query, {
-            "voltaje_a": datos.voltaje_A,
-            "voltaje_b": datos.voltaje_B,
-            "voltaje_c": datos.voltaje_C,
-            "frecuencia": datos.frecuencia,
-            "demanda_potencia_activa_total": datos.demanda_potencia_activa_total,
-            "timestamp": datos.timestamp  # ✅ Ensure this is passed as `datetime.datetime`
-        })
+        await database.execute(query, datos.dict())
+
         return {"message": "Datos recibidos correctamente"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Failed to process request: {str(e)}"}
+
 
 # ✅ Endpoint to Retrieve Data
 
