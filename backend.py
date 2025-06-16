@@ -2,12 +2,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
-from datetime import datetime
 from time import sleep
 import requests
 import os
 import uvicorn
 import asyncio
+from datetime import datetime
 from databases import Database
 
 # ✅ Correct Database Connection with Async Support
