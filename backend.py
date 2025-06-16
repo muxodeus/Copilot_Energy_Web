@@ -53,7 +53,7 @@ def modbus_data_loop():
 
 # ✅ Startup & Shutdown DB Connection
 @app.on_event("startup")
-async def startup():
+async def check_database_connection():
     await database.connect()
 
 @app.on_event("shutdown")
