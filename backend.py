@@ -88,7 +88,7 @@ async def obtener_datos():
     return [dict(registro) for registro in registros]
     
     # Confirm FastAPI's Database Connection    
-    @app.get("/check-db")
+@app.get("/check-db")
 async def check_database_connection():
     try:
         query = "SELECT NOW() as current_time;"
