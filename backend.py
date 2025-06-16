@@ -3,13 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 from time import sleep
+from datetime import datetime
+from databases import Database
 import requests
 import os
 import uvicorn
 import json
 import asyncio
-from datetime import datetime
-from databases import Database
+import logging
+
 
 # ✅ Correct Database Connection with Async Support
 DATABASE_URL = os.getenv(
@@ -96,11 +98,14 @@ async def start_modbus_loop():
 
 @app.on_event("startup")
 async def check_database_connection():
+    logging.info("Starting FastAPI... Connecting to database")
     await database.connect()
+    logging.info("Database connection successful")
 
 
 @app.on_event("shutdown")
 async def shutdown():
+    logging.info("Shutting down FastAPI... Disconnecting database")
     await database.disconnect()
 
 # ✅ Endpoint to Insert Data
@@ -171,4 +176,4 @@ async def debug_query():
 
 # ✅ Run FastAPI with Uvicorn on Render
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # ✅ Explicitly set the port
