@@ -7,6 +7,7 @@ from time import sleep
 import requests
 import os
 import uvicorn
+import asyncio
 from databases import Database
 
 # ✅ Correct Database Connection with Async Support
@@ -36,28 +37,33 @@ class DatosMedicion(BaseModel):
     voltaje_C: float
     frecuencia: float
     demanda_potencia_activa_total: float
-    timestamp: str
+    timestamp: datetime  # ✅ Convert timestamp automatically
 
 # ✅ Auto Insert Data Every 2 Seconds
 
-
-def modbus_data_loop():
+async def modbus_data_loop():
     while True:
         modbus_data = {
-            "voltaje_A": 121.5,  # Replace with actual Modbus readings
+            "voltaje_A": 121.5,  
             "voltaje_B": 123.2,
             "voltaje_C": 119.4,
             "frecuencia": 60.0,
             "demanda_potencia_activa_total": 470.1,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow()  # ✅ Convert timestamp to `datetime.datetime`
         }
+        try:
+            response = requests.post("https://copilot-energy-web.onrender.com/recibir_datos", json=modbus_data)
+            print("Sent Data:", response.status_code, response.json())  # ✅ Debugging
+        except Exception as e:
+            print("Error sending data:", str(e))
 
-        response = requests.post(
-            "https://copilot-energy-web.onrender.com/recibir_datos",
-            json=modbus_data)
-        print("Sent Data:", response.json())  # ✅ Debugging
+        await asyncio.sleep(2)  # ✅ More reliable async sleep
 
-        sleep(2)
+# ✅ Start the loop in FastAPI startup event
+@app.on_event("startup")
+async def start_modbus_loop():
+    asyncio.create_task(modbus_data_loop())
+
 
 # ✅ Startup & Shutdown DB Connection
 
@@ -74,33 +80,49 @@ async def shutdown():
 # ✅ Endpoint to Insert Data
 
 
+from datetime import datetime
+
 @app.post("/recibir_datos")
 async def recibir_datos(datos: DatosMedicion):
-    query = """
-    INSERT INTO mediciones_w63r (voltaje_a, voltaje_b, voltaje_c, frecuencia, demanda_potencia_activa_total, timestamp)
-    VALUES (:voltaje_A, :voltaje_B, :voltaje_C, :frecuencia, :demanda_potencia_activa_total, :timestamp)
-    """
-    await database.execute(query, datos.dict())
-    return {"message": "Datos recibidos correctamente"}
+    try:
+        query = """
+        INSERT INTO mediciones_w63r (voltaje_a, voltaje_b, voltaje_c, frecuencia, demanda_potencia_activa_total, timestamp)
+        VALUES (:voltaje_a, :voltaje_b, :voltaje_c, :frecuencia, :demanda_potencia_activa_total, :timestamp)
+        """
+        await database.execute(query, {
+            "voltaje_a": datos.voltaje_A,
+            "voltaje_b": datos.voltaje_B,
+            "voltaje_c": datos.voltaje_C,
+            "frecuencia": datos.frecuencia,
+            "demanda_potencia_activa_total": datos.demanda_potencia_activa_total,
+            "timestamp": datos.timestamp  # ✅ Ensure this is passed as `datetime.datetime`
+        })
+        return {"message": "Datos recibidos correctamente"}
+    except Exception as e:
+        return {"error": str(e)}
 
 # ✅ Endpoint to Retrieve Data
 
 
 @app.get("/datos")
 async def obtener_datos():
-    query = """
-    SELECT voltaje_a AS "voltaje_A", voltaje_b AS "voltaje_B", voltaje_c AS "voltaje_C",
-           frecuencia, demanda_potencia_activa_total, timestamp
-    FROM mediciones_w63r
-    ORDER BY timestamp DESC
-    LIMIT 50;
-    """
-    registros = await database.fetch_all(query)
+    try:
+        query = """
+        SELECT voltaje_a AS "voltaje_A", voltaje_b AS "voltaje_B", voltaje_c AS "voltaje_C",
+               frecuencia, demanda_potencia_activa_total, timestamp
+        FROM mediciones_w63r
+        ORDER BY timestamp DESC
+        LIMIT 50;
+        """
+        registros = await database.fetch_all(query)
 
-    if not registros:  # ✅ Handle empty response properly
-        return {"error": "No data found in database"}
+        if not registros:
+            return {"error": "No data found in database"}
 
-    return [dict(registro) for registro in registros]
+        return [dict(registro) for registro in registros]
+    except Exception as e:
+        return {"error": str(e)}
+
 
     # Confirm FastAPI's Database Connection
 
