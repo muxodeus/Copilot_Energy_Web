@@ -3,3 +3,6 @@ nixpkgs = ["python3", "postgresql_16.dev", "gcc"]
 
 [phases.start]
 cmd = "uvicorn backend:app --host 0.0.0.0 --port $PORT"
+
+[build]
+python_version = "3.13"
