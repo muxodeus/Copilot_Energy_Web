@@ -10,7 +10,9 @@ import uvicorn
 from databases import Database
 
 # ✅ Correct Database Connection with Async Support
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://mediciones_w63r_user:mJmDFzYPGpwflXHBxmpx8LhxXHAhW2uP@dpg-d17grr95pdvs738che40-a.oregon-postgres.render.com/mediciones_w63r")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://mediciones_w63r_user:mJmDFzYPGpwflXHBxmpx8LhxXHAhW2uP@dpg-d17grr95pdvs738che40-a.oregon-postgres.render.com/mediciones_w63r")
 database = Database(DATABASE_URL)
 
 # ✅ FastAPI App Initialization
@@ -26,6 +28,8 @@ app.add_middleware(
 )
 
 # ✅ Data Model
+
+
 class DatosMedicion(BaseModel):
     voltaje_A: float
     voltaje_B: float
@@ -35,6 +39,8 @@ class DatosMedicion(BaseModel):
     timestamp: str
 
 # ✅ Auto Insert Data Every 2 Seconds
+
+
 def modbus_data_loop():
     while True:
         modbus_data = {
@@ -46,21 +52,28 @@ def modbus_data_loop():
             "timestamp": datetime.utcnow().isoformat()
         }
 
-        response = requests.post("https://copilot-energy-web.onrender.com/recibir_datos", json=modbus_data)
+        response = requests.post(
+            "https://copilot-energy-web.onrender.com/recibir_datos",
+            json=modbus_data)
         print("Sent Data:", response.json())  # ✅ Debugging
 
         sleep(2)
 
 # ✅ Startup & Shutdown DB Connection
+
+
 @app.on_event("startup")
 async def check_database_connection():
     await database.connect()
+
 
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
 
 # ✅ Endpoint to Insert Data
+
+
 @app.post("/recibir_datos")
 async def recibir_datos(datos: DatosMedicion):
     query = """
@@ -71,6 +84,8 @@ async def recibir_datos(datos: DatosMedicion):
     return {"message": "Datos recibidos correctamente"}
 
 # ✅ Endpoint to Retrieve Data
+
+
 @app.get("/datos")
 async def obtener_datos():
     query = """
@@ -86,8 +101,10 @@ async def obtener_datos():
         return {"error": "No data found in database"}
 
     return [dict(registro) for registro in registros]
-    
-    # Confirm FastAPI's Database Connection    
+
+    # Confirm FastAPI's Database Connection
+
+
 @app.get("/check-db")
 async def check_database_connection():
     try:
@@ -104,7 +121,6 @@ async def debug_query():
     query = "SELECT COUNT(*) AS total_rows FROM mediciones_w63r;"
     result = await database.fetch_one(query)
     return {"Total Records in DB": result["total_rows"]}
-    
 
 
 # ✅ Run FastAPI with Uvicorn on Render
