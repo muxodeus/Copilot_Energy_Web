@@ -49,7 +49,29 @@ async def modbus_data_loop():
             "voltaje_C": 119.4,
             "frecuencia": 60.0,
             "demanda_potencia_activa_total": 470.1,
-            "timestamp": datetime.utcnow()  # ✅ Convert timestamp to `datetime.datetime`
+            "timestamp": datetime.utcnow().isoformat()  # ✅ Convert `datetime` to an ISO 8601 string
+        }
+        try:
+            response = requests.post("https://copilot-energy-web.onrender.com/recibir_datos", json=modbus_data)
+            print("Sent Data:", response.status_code, response.json())  # ✅ Debugging
+        except Exception as e:
+            print("Error sending data:", str(e))
+
+        await asyncio.sleep(2)  # ✅ More reliable async sleep
+
+# ✅ Start the loop in FastAPI startup event
+@app.on_event("startup")
+async def start_modbus_loop():
+    asyncio.create_task(modbus_data_loop())
+async def modbus_data_loop():
+    while True:
+        modbus_data = {
+            "voltaje_A": 121.5,  
+            "voltaje_B": 123.2,
+            "voltaje_C": 119.4,
+            "frecuencia": 60.0,
+            "demanda_potencia_activa_total": 470.1,
+            "timestamp": datetime.utcnow().isoformat()  # ✅ Convert datetime to string
         }
         try:
             response = requests.post("https://copilot-energy-web.onrender.com/recibir_datos", json=modbus_data)
