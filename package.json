@@ -1,0 +1,25 @@
+{
+  "name": "copilot_energy_web",
+  "version": "1.0.0",
+  "description": "Backend para Analítica Energética",
+  "main": "App.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+ "repository": {
+    "type": "git",
+    "url": "https://github.com/muxodeus/Copilot_Energy_Web.git"
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/muxodeus/Copilot_Energy_Web/issues"
+  },
+  "homepage": "https://github.com/muxodeus/Copilot_Energy_Web#readme",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "pg": "^8.16.0"
+  }
+}
